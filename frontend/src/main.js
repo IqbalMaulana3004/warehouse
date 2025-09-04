@@ -9,6 +9,17 @@ let desc = "";
 let data = "";
 let sn = "";
 let imei = "";
+const modal = document.getElementById("modal");
+const closeBtn = document.getElementById("closeModal");
+const closeBtn2 = document.getElementById("closeModal2");
+const location = document.getElementById("location-info")
+
+closeBtn.addEventListener("click", () => {
+    modal.classList.add("hidden");
+});
+closeBtn2.addEventListener("click", () => {
+    modal.classList.add("hidden");
+});
 
 const selectEl = document.getElementById("device");
 selectedCodeId = selectEl.value; // default pas load
@@ -24,24 +35,12 @@ selectedCodeId = selectEl.value; // default pas load
   }
 
   // EXCEL 
-  const saveToGoogleSheet = (text) => { fetch("https://script.google.com/macros/s/AKfyc.../exec", { 
-    method: "POST", body: JSON.stringify({ qr: text }), 
-  }); };
-
-  const exportExcel = () => { 
-    const ws = XLSX.utils.json_to_sheet(scans); const wb = XLSX.utils.book_new(); 
-    XLSX.utils.book_append_sheet(wb, ws, "QR Data"); 
-    XLSX.writeFile(wb, "warehouse-kalsel.xlsx"); 
-  }; 
-  document.getElementById("exportExcel").addEventListener("click", exportExcel);
-
   // Update saat berubah
   selectEl.addEventListener("change", function () {
     selectedCodeId = this.value;
     desc = updateDesc(selectedCodeId);
       // console.log("Change:", desc);
   });
-  // desc = updateDesc(selectedCodeId);
   
 // ===================================
 // SCAN
@@ -62,17 +61,16 @@ radios.forEach((radio) => {
             if (selectedCodeId === null || selectedCodeId === "") {
               alert("Tolong Pilih Device Yang Akan Discan")
             } else{
-                console.log("INI KODENYA",selectedCodeId);
-                console.log("INI DESKRIPSI KODE",desc);
-                console.log(decodedText);
                 
                 if (selectedCodeId === "1030") {
                   data = decodedText.split("|")
                   sn = data[0]
                   imei = data[1]
-                } else{
+                } else if(selectedCodeId === "1003"){
                   sn = decodedText.match(/Serial Number\s*:\s*(\S+)/);
                   imei = ""
+                } else{
+                  alert = "Infalid QR Code - SN Tidak Ditemukan"
                 }
 
                 const newData = {
@@ -86,23 +84,22 @@ radios.forEach((radio) => {
                   NoBox: "none",
                   Result: sn,
                   IMEICCID: imei,
-                  Location: "none",
+                  Location: location.value,
                   Remarks: "none",
                   Anydesk: "none",
                 };
 
                 scans.push(newData);
 
-                // tampilkan ke list
-                const li = document.createElement("li");
-                li.textContent = `${newData.Result} (${newData.Date}) [${newData.CodeId}] [${newData.ItemDesc}]`;
-                document.getElementById("resultList").appendChild(li);
-
                 document.getElementById("date").value = newData.Date;
                 document.getElementById("codeId").value = newData.CodeId;
                 document.getElementById("itemDesc").value = newData.ItemDesc;
                 document.getElementById("qyt").value = newData.Qyt;
                 document.getElementById("sn").value = newData.Result;
+                document.getElementById("imeiccid").value = newData.IMEICCID;
+                document.getElementById("location").value = newData.Location;
+
+                modal.classList.remove("hidden");
             }
          
         }
@@ -115,4 +112,58 @@ radios.forEach((radio) => {
       scanner.render(onScanSuccess);
     }
   });
+});
+
+
+// ===============
+// SIMPAN DATA
+// ===============
+
+let url = "";
+
+location.addEventListener("click", () => {
+  console.log(location.value);
+  if (location.value === "Inbound") {
+    url = "http://localhost:3000/api/inbound"
+
+  } else if(location.value === "Outbound"){
+    url = "http://localhost:3000/api/outbound"
+
+  } else if(location.value === "Diffect"){
+    url = "http://localhost:3000/api/diffect"
+
+  }
+})
+
+document.getElementById("btnSimpan").addEventListener("click", () => {
+
+   // Ambil data dari modal
+  const data = {
+    date: document.getElementById("date").value,
+    codeId: document.getElementById("codeId").value,
+    itemDesc: document.getElementById("itemDesc").value,
+    qty: document.getElementById("qyt").value,
+    sn: document.getElementById("sn").value,
+    imeiccid: document.getElementById("imeiccid").value,
+    deviceStatus: document.getElementById("deviceStatus").value,
+    location: document.getElementById("location").value,
+    anydesk: document.getElementById("anydesk").value,
+  };
+
+  console.log("Data modal:", data);
+
+  fetch(url, {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((res) => res.json())
+    .then((msg) => {
+      console.log("Response:", msg);
+      alert(msg.message);
+      modal.classList.add("hidden");
+    })
+    .catch((err) => console.error(err));
 });

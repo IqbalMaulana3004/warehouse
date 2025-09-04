@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="/src/style.css" rel="stylesheet">
+  <title>Warehouse Scanner</title>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+  <!-- Navbar -->
+  <nav class="flex w-full items-center justify-between px-10 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg">
+    <h3 class="text-2xl font-bold text-white">Warehouse</h3>
+    <ul class="flex gap-6 text-lg text-white">
+      <li><a href="index.html" class="hover:text-yellow-300 transition">Home</a></li>
+      <li><a href="inbound.html" class="hover:text-yellow-300 transition">Scan</a></li>
+      <!-- <li><a href="outboud.html" class="hover:text-yellow-300 transition">Outboud</a></li>
+      <li><a href="deffect.html" class="hover:text-yellow-300 transition">Diffect</a></li> -->
+    </ul>
+  </nav>
+
+  <!-- Content -->
+  <div class="flex flex-col items-center justify-center my-3 px-5">
+    
+    <!-- Radio scan type -->
+    <div class="flex gap-6 bg-white shadow-md p-4 rounded-xl">
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="radio" id="qr" name="scanType" value="qr" class="accent-blue-600">
+        <span>QR Code</span>
+      </label>
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="radio" id="barcode" name="scanType" value="barcode" class="accent-blue-600">
+        <span>Barcode</span>
+      </label>
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="radio" id="textrecognition" name="scanType" value="text" class="accent-blue-600">
+        <span>Text Scan</span>
+      </label>
+    </div>
+
+    <!-- Device select -->
+    <div class="flex flex-col w-full max-w-md my-3">
+      <label for="device" class="mb-1 font-medium">Pilih Location Device</label>
+      <select id="device" class="border rounded-lg px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="" selected disabled>Select</option>
+        <option value="1003">Interceptop Box</option>
+        <option value="1018">Sunmi P2</option>
+        <option value="1006">Modem</option>
+        <option value="1030">Simcard Indosat</option>
+      </select>
+    </div>
+
+    <div class="flex flex-col w-full max-w-md my-3">
+      <label for="location-info" class="mb-1 font-medium">Pilih Location Untuk Di Scan</label>
+      <select id="location-info" class="border rounded-lg px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="" selected disabled>Select</option>
+        <option value="Inbound">Inbound</option>
+        <option value="Outbound">Outbound</option>
+        <option value="Diffect">Diffect</option>
+      </select>
+    </div>
+    <!-- Scanner -->
+    <div id="reader" class="w-full max-w-md bg-white rounded-xl shadow p-4"></div>
+
+    <!-- <button id="exportExcel" class="mt-4 px-6 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition">
+      Export ke Excel
+    </button> -->
+    <!-- <ul id="resultList" class="mt-4 list-disc list-inside text-gray-700"></ul> -->
+
+    <!-- Form -->
+
+<!-- Overlay Modal -->
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <!-- Modal Content -->
+  <div class="bg-white border p-8 rounded-2xl shadow-xl w-full max-w-md animate-fadeIn max-h-screen overflow-y-auto">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold text-gray-700">Detail Scan</h2>
+      <button id="closeModal" class="text-gray-500 hover:text-red-500 text-2xl leading-none">&times;</button>
+    </div>
+
+    <div class="flex flex-col mb-3">
+      <label for="date" class="mb-1">Date</label>
+      <input type="text" id="date" class="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div class="flex flex-col mb-3">
+      <label for="codeId" class="mb-1">Kode ID</label>
+      <input type="text" id="codeId" class="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div class="flex flex-col mb-3">
+      <label for="itemDesc" class="mb-1">Item Description</label>
+      <input type="text" id="itemDesc" class="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div class="flex flex-col mb-3">
+      <label for="deviceStatus" class="mb-1">Device Status</label>
+      <select id="deviceStatus" class="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+        <option value="Ready">Ready</option>
+        <option value="Broken">Broken</option>
+      </select>
+    </div>
+    <div class="flex flex-col mb-3">
+      <label for="qyt" class="mb-1">Qty</label>
+      <input type="text" id="qyt" class="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div class="flex flex-col mb-3">
+      <label for="sn" class="mb-1">SN</label>
+      <input type="text" id="sn" class="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div class="flex flex-col mb-3">
+      <label for="imeiccid" class="mb-1">IMEI/CCID</label>
+      <input type="text" id="imeiccid" class="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div class="flex flex-col mb-3">
+      <label for="location" class="mb-1">Location</label>
+      <input type="text" id="location" class="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div class="flex flex-col mb-3">
+      <label for="anydesk" class="mb-1">Anydesk</label>
+      <input type="text" id="anydesk" class="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+    </div>
+
+    <!-- Buttons -->
+    <div class="mt-5 flex gap-3 justify-end">
+      <button id="closeModal2" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition">Batal</button>
+      <button class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition" id="btnSimpan">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Animasi modal -->
+<style>
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .animate-fadeIn {
+    animation: fadeIn 0.2s ease-out;
+  }
+</style>
+
+  </div>
+
+    <script type="module" src="./src/main.js"></script>
+  
+</body>
+</html>
