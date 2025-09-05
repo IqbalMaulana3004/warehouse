@@ -1,4 +1,4 @@
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeScanner } from "html5-qrcode";
 import * as XLSX from "xlsx";
 
 let scans = [];
@@ -52,68 +52,83 @@ radios.forEach((radio) => {
   radio.addEventListener("change", (e) => {
     selectedScanner = e.target.value;
     console.log("Scanner yang dipilih:", selectedScanner);
-  
-    if (selectedScanner === "qr") {
-      const onScanSuccess = (decodedText) => {
-        if (!scans.find((s) => s.Result === decodedText)) {
-          const today = new Date().toISOString().split("T")[0]; // hanya tanggal
-          
-            if (selectedCodeId === null || selectedCodeId === "") {
-              alert("Tolong Pilih Device Yang Akan Discan")
-            } else{
-                
-                if (selectedCodeId === "1030") {
-                  data = decodedText.split("|")
-                  sn = data[0]
-                  imei = data[1]
-                } else if(selectedCodeId === "1003"){
-                  sn = decodedText.match(/Serial Number\s*:\s*(\S+)/);
-                  imei = ""
-                } else{
-                  alert = "Infalid QR Code - SN Tidak Ditemukan"
-                }
-
-                const newData = {
-                  no: counter++,
-                  Date: today,
-                  CodeId: selectedCodeId, // <- selalu ambil dari variabel global
-                  ItemDesc: desc,
-                  Qyt: 1,
-                  DeviceStatus: "none",
-                  Batch: "none",
-                  NoBox: "none",
-                  Result: sn,
-                  IMEICCID: imei,
-                  Location: location.value,
-                  Remarks: "none",
-                  Anydesk: "none",
-                };
-
-                scans.push(newData);
-
-                document.getElementById("date").value = newData.Date;
-                document.getElementById("codeId").value = newData.CodeId;
-                document.getElementById("itemDesc").value = newData.ItemDesc;
-                document.getElementById("qyt").value = newData.Qyt;
-                document.getElementById("sn").value = newData.Result;
-                document.getElementById("imeiccid").value = newData.IMEICCID;
-                document.getElementById("location").value = newData.Location;
-
-                modal.classList.remove("hidden");
-            }
-         
-        }
-      };
-
-      const scanner = new Html5QrcodeScanner("reader", {
-        fps: 10,
-        qrbox: 250,
-      });
-      scanner.render(onScanSuccess);
-    }
+    startSelectedScanner();
   });
 });
 
+// fungsi start scanner sesuai pilihan
+function startSelectedScanner() {
+  if (selectedScanner === "qr") {
+    const onScanSuccess = (decodedText) => {
+      if (!scans.find((s) => s.Result === decodedText)) {
+        const today = new Date().toISOString().split("T")[0];
+
+        if (!selectedCodeId) {
+          alert("Tolong Pilih Device Yang Akan Discan");
+          return;
+        }
+
+        if (selectedCodeId === "1030") {
+          data = decodedText.split("|");
+          sn = data[0];
+          imei = data[1];
+        } else if (selectedCodeId === "1003") {
+          sn = decodedText;
+          imei = "";
+        } else if(selectedCodeId === "1018"){
+          data = decodedText.match(/SN\s*:\s*(\S+)/)
+          sn = data[1];
+          imei = "";
+        } else {
+          alert("Invalid QR Code - SN Tidak Ditemukan");
+        }
+
+        const newData = {
+          no: counter++,
+          Date: today,
+          CodeId: selectedCodeId,
+          ItemDesc: desc,
+          Qyt: 1,
+          DeviceStatus: "none",
+          Batch: "none",
+          NoBox: "none",
+          Result: sn,
+          IMEICCID: imei,
+          Location: location.value,
+          Remarks: "none",
+          Anydesk: "none",
+        };
+
+        scans.push(newData);
+
+        document.getElementById("date").value = newData.Date;
+        document.getElementById("codeId").value = newData.CodeId;
+        document.getElementById("itemDesc").value = newData.ItemDesc;
+        document.getElementById("qyt").value = newData.Qyt;
+        document.getElementById("sn").value = newData.Result;
+        document.getElementById("imeiccid").value = newData.IMEICCID;
+        document.getElementById("location").value = newData.Location;
+
+        modal.classList.remove("hidden");
+      }
+    };
+
+    const scanner = new Html5QrcodeScanner("reader", {
+      fps: 10,
+      qrbox: 250,
+    });
+    scanner.render(onScanSuccess);
+  } else if(selectedScanner === "text"){
+
+  }
+}
+
+// ⬇️ Tambahin ini supaya kamera langsung aktif sesuai default radio
+const defaultChecked = document.querySelector("input[name='scanType']:checked");
+if (defaultChecked) {
+  selectedScanner = defaultChecked.value;
+  startSelectedScanner();
+}
 
 // ===============
 // SIMPAN DATA
