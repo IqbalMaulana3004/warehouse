@@ -1,5 +1,6 @@
 import { Html5Qrcode, Html5QrcodeScanner } from "html5-qrcode";
 import * as XLSX from "xlsx";
+import Tesseract from "tesseract.js";
 
 let scans = [];
 let counter = 1; 
@@ -76,8 +77,7 @@ function startSelectedScanner() {
           sn = decodedText;
           imei = "";
         } else if(selectedCodeId === "1018"){
-          data = decodedText.match(/SN\s*:\s*(\S+)/)
-          sn = data[1];
+          sn = decodedText;
           imei = "";
         } else {
           alert("Invalid QR Code - SN Tidak Ditemukan");
@@ -118,9 +118,73 @@ function startSelectedScanner() {
       qrbox: 250,
     });
     scanner.render(onScanSuccess);
-  } else if(selectedScanner === "text"){
+  }  else if (selectedScanner === "text") {
+  // Ambil kamera
+    navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+      const video = document.createElement("video");
+      video.autoplay = true;
+      video.srcObject = stream;
+      document.getElementById("reader").innerHTML = ""; // reset
+      document.getElementById("reader").appendChild(video);
 
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      // Capture frame per 2 detik buat OCR
+      setInterval(async () => {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          const { data: { text } } = await Tesseract.recognize(canvas, "eng", {
+            logger: (m) => console.log(m), // progress log
+          });
+
+          if (text.trim()) {
+            console.log("Teks hasil OCR:", text);
+
+            // contoh: ambil SN dengan pola "SN : XXXXX"
+            const match = text.match(/SN\s*:\s*([A-Za-z0-9]+)/);
+            if (match) {
+              sn = match[1];
+              imei = "";
+
+              const today = new Date().toISOString().split("T")[0];
+              const newData = {
+                no: counter++,
+                Date: today,
+                CodeId: selectedCodeId,
+                ItemDesc: desc,
+                Qyt: 1,
+                DeviceStatus: "none",
+                Batch: "none",
+                NoBox: "none",
+                Result: sn,
+                IMEICCID: imei,
+                Location: location.value,
+                Remarks: "none",
+                Anydesk: "none",
+              };
+
+              scans.push(newData);
+
+              document.getElementById("date").value = newData.Date;
+              document.getElementById("codeId").value = newData.CodeId;
+              document.getElementById("itemDesc").value = newData.ItemDesc;
+              document.getElementById("qyt").value = newData.Qyt;
+              document.getElementById("sn").value = newData.Result;
+              document.getElementById("imeiccid").value = newData.IMEICCID;
+              document.getElementById("location").value = newData.Location;
+
+              modal.classList.remove("hidden");
+            }
+          }
+        }
+      }, 2000);
+    });
   }
+
 }
 
 // ⬇️ Tambahin ini supaya kamera langsung aktif sesuai default radio
