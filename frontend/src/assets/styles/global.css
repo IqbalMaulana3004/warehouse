@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body { @apply bg-gray-100 text-gray-800; }
+
+/* Small helper */
+.btn-primary { @apply px-4 py-2 rounded-md bg-primary text-white hover:bg-blue-700; }
